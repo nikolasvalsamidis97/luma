@@ -1,0 +1,15 @@
+Luma includes VLCKit 3.7.2 and its bundled libVLC playback engine, by VideoLAN and its contributors.
+VLCKit is licensed under the GNU Lesser General Public License, version 2.1 or later.
+The accompanying VLCKit-COPYING.txt contains the license text in the built application.
+
+Upstream source and build instructions:
+https://code.videolan.org/videolan/VLCKit
+https://github.com/videolan/vlckit
+Release packaging reference:
+https://raw.githubusercontent.com/videolan/vlckit/master/Packaging/VLCKit.json
+Unmodified binary distribution:
+https://download.videolan.org/pub/cocoapods/prod/VLCKit-3.7.2-3e42ae47-79128878.tar.xz
+VLCKit source revision: 3e42ae47
+libVLC source revision: 79128878
+
+The framework is dynamically linked and unmodified. Users may replace the bundled framework with a compatible modified build and re-sign their local application. Reverse engineering for debugging modifications to LGPL-covered libraries is permitted. Luma claims no ownership of provider content.
