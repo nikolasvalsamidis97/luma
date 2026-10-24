@@ -1,0 +1,28 @@
+LUMA FOR WINDOWS — PREVIEW
+
+1. Extract the entire Luma-Windows-x64.zip archive (right-click > Extract All).
+2. Open the extracted Luma-Windows-x64 folder.
+3. Double-click Luma.exe.
+4. Enter your provider's Xtream Codes server, username and password, or an M3U link.
+5. Use Add playlist to save more accounts, then switch with the sidebar playlist list.
+
+Windows 10/11, 64-bit Intel or AMD PC. This is not a native Windows ARM64 build.
+Do not move Luma.exe out of its folder. The other files include the .NET runtime,
+VLC playback engine and codecs. You do not need to install .NET, VLC, or codecs.
+
+This is an unsigned preview. Windows may warn about an unrecognized publisher.
+Only run copies from a source you trust. Production signing is not configured.
+
+F11: fullscreen. Escape: leave fullscreen. Space: play/pause.
+Back returns to the selected episode list. Play next appears near the ending.
+Audio and Subtitles choose tracks provided by the video. Apply subtitle style
+briefly restarts playback and restores the position for seekable streams.
+
+No TV service or content is included. Preview library titles are fictional.
+Credentials and saved progress are encrypted for your Windows login and stored
+in %LOCALAPPDATA%\Luma. Disconnect keeps saved playlists. Manage playlists lets you rename them or remove their saved credentials.
+Watchlist and progress stay on this PC; there is no Mac/Windows cloud sync.
+This preview follows the existing free Mac 0.7.0 release. Paid licensing is not
+enabled in either public release yet.
+
+See THIRD_PARTY_NOTICES.txt and the bundled license files for third-party code.

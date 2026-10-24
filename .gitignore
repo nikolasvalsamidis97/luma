@@ -1,1 +1,29 @@
+.build/
 .DS_Store
+Vendor/
+dist/
+.swiftpm/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.sqlite3*
+licensing-server/.venv/
+.tools/
+node_modules/
+.wrangler/
+.dev.vars*
+licensing-worker/private/
+windows/**/bin/
+windows/**/obj/
+
+# Local signing material and provider/account exports
+*.key
+*.pem
+*.p12
+*.pfx
+!.dev.vars.example
+
+# Account-specific deployment settings; publish templates instead
+licensing-worker/wrangler.jsonc
+licensing-server/stripe-test-config.json

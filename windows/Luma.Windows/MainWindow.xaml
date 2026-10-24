@@ -1,0 +1,88 @@
+<Window x:Class="Luma.Windows.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Luma" Width="1280" Height="860" MinWidth="980" MinHeight="680" WindowStartupLocation="CenterScreen">
+ <Grid>
+  <Grid x:Name="LoginPanel" Margin="32">
+   <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Width="420" VerticalAlignment="Center">
+    <TextBlock Text="▶ luma" Foreground="{StaticResource Accent}" FontSize="48" FontWeight="Bold"/>
+    <TextBlock Text="Your TV, at home on Windows." FontSize="22" Margin="0,12,0,8"/>
+    <TextBlock Text="Connect your Xtream Codes account or M3U link." Foreground="#9AA1AE" Margin="0,0,0,25"/>
+    <StackPanel x:Name="SavedLoginPanel" Visibility="Collapsed" Margin="0,0,0,12"><TextBlock Text="Saved playlists" Margin="0,0,0,8"/><ComboBox x:Name="SavedLoginList" DisplayMemberPath="DisplayName"/><Button Content="Open saved playlist" Click="OpenSaved_Click" Margin="0,8,0,0"/><Button Content="Manage playlists" Click="ManagePlaylists_Click" Margin="0,6,0,0"/></StackPanel>
+    <TextBlock Text="Playlist name (optional)" Margin="0,0,0,8"/><TextBox x:Name="PlaylistNameInput" ToolTip="e.g. Home TV" Margin="0,0,0,14"/>
+    <ComboBox x:Name="SourceInput" SelectedIndex="0" SelectionChanged="Source_Changed" Margin="0,0,0,12"><ComboBoxItem Content="Xtream Codes"/><ComboBoxItem Content="M3U link"/></ComboBox>
+    <StackPanel x:Name="PlaylistFields" Visibility="Collapsed"><TextBlock Text="Playlist link" Margin="0,8"/><PasswordBox x:Name="PlaylistInput" AutomationProperties.Name="M3U playlist link"/><TextBlock Text="Channels, movies and numbered episodes use the information in your playlist." TextWrapping="Wrap" Foreground="#9AA1AE" Margin="0,10"/></StackPanel>
+    <StackPanel x:Name="XtreamFields">
+    <TextBlock Text="Server address" Margin="0,8"/><TextBox x:Name="ServerInput" AutomationProperties.Name="Provider server address" ToolTip="https://provider.example:port"/>
+    <TextBlock Text="Username" Margin="0,14,0,8"/><TextBox x:Name="UsernameInput" AutomationProperties.Name="Provider username"/>
+    <TextBlock Text="Password" Margin="0,14,0,8"/><PasswordBox x:Name="PasswordInput" AutomationProperties.Name="Provider password"/>
+    </StackPanel>
+    <CheckBox x:Name="RememberInput" Content="Remember this account securely on this PC" IsChecked="True" Margin="0,20"/>
+    <Button x:Name="ConnectButton" Content="Connect to my library" Style="{StaticResource Primary}" Click="Connect_Click"/>
+    <Button x:Name="CancelAddButton" Content="Back to current playlist" Click="CancelAdd_Click" Visibility="Collapsed" Margin="0,12,0,0"/>
+    <Button Content="Take a look around" Margin="0,12,0,0" Click="Demo_Click"/>
+    <TextBlock x:Name="LoginMessage" TextWrapping="Wrap" Foreground="#FF9E90" Margin="0,16"/>
+    <TextBlock Text="No TV content is included. Windows preview." Foreground="#828A99" FontSize="12"/>
+   </StackPanel></ScrollViewer>
+  </Grid>
+  <Grid x:Name="LibraryPanel" Visibility="Collapsed">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="215"/><ColumnDefinition/></Grid.ColumnDefinitions>
+   <Border Background="#15181F"><Grid Margin="18,28,18,18">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <TextBlock Text="▶ luma" FontSize="35" FontWeight="Bold" Foreground="{StaticResource Accent}" Margin="8,8,0,32"/>
+    <StackPanel Grid.Row="1">
+     <TextBlock Text="YOUR LIBRARY" Foreground="#858E9F" FontSize="11" Margin="10,0,0,15"/>
+     <Button x:Name="LiveNav" Content="▣  Live TV" Tag="Live" Click="Navigate_Click" HorizontalContentAlignment="Left" Margin="0,3"/>
+     <Button x:Name="MovieNav" Content="▤  Movies" Tag="Movie" Click="Navigate_Click" HorizontalContentAlignment="Left" Margin="0,3"/>
+     <Button x:Name="SeriesNav" Content="▱  Series" Tag="Series" Click="Navigate_Click" HorizontalContentAlignment="Left" Margin="0,3"/>
+     <CheckBox x:Name="FavoritesOnly" Content="♡  Favorites only" Margin="12,18" Click="Filter_Changed"/>
+    </StackPanel>
+    <TextBlock Grid.Row="2" Text="CATEGORIES" Foreground="#858E9F" FontSize="11" Margin="10,20,0,12"/>
+    <ListBox Grid.Row="3" x:Name="CategoryList" DisplayMemberPath="Name" SelectionChanged="Category_Changed" FontSize="12"/>
+    <StackPanel Grid.Row="4" Margin="8,16,0,0"><TextBlock x:Name="AccountLabel" TextTrimming="CharacterEllipsis" Foreground="#9BA3B2" FontSize="11"/><ComboBox x:Name="PlaylistSwitcher" DisplayMemberPath="DisplayName" SelectionChanged="Playlist_Changed" Margin="0,10,0,0" AutomationProperties.Name="Current playlist"/>
+    <Button Content="+ Add playlist" Click="AddPlaylist_Click" Margin="0,8,0,0"/><Button Content="Manage playlists" Click="ManagePlaylists_Click" Margin="0,6,0,0"/>
+    <Button Content="Disconnect" HorizontalAlignment="Left" Background="Transparent" Click="SignOut_Click" Margin="-10,8,0,0"/></StackPanel>
+   </Grid></Border>
+   <Grid Grid.Column="1" Margin="30,24">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,20"><TextBlock x:Name="SectionTitle" Text="Movies" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
+     <Button Content="↻" DockPanel.Dock="Right" Click="Refresh_Click" ToolTip="Refresh library" Margin="10,0,0,0"/>
+     <TextBox x:Name="SearchInput" DockPanel.Dock="Right" Width="260" HorizontalAlignment="Right" TextChanged="Search_Changed" AutomationProperties.Name="Search titles" ToolTip="Search titles"/>
+    </DockPanel>
+    <TextBlock x:Name="StatusMessage" Grid.Row="1" TextWrapping="Wrap" Foreground="#FF9E90" Margin="0,0,0,12"/>
+    <ScrollViewer x:Name="BrowsePanel" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <StackPanel>
+      <Grid x:Name="Shelves" Margin="0,0,0,26">
+       <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
+       <Border Background="{StaticResource Surface}" CornerRadius="14" Padding="18"><StackPanel>
+        <TextBlock Text="Continue watching" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="ContinueEmpty" Text="Your next chapter starts here." Foreground="#9AA1AE" Margin="0,10"/>
+        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto"><ItemsControl x:Name="ContinueList"><ItemsControl.ItemTemplate><DataTemplate><DockPanel Margin="0,9,0,0"><Button Content="×" DockPanel.Dock="Right" Tag="{Binding}" Click="RemoveProgress_Click" ToolTip="Remove saved progress"/><Button Tag="{Binding}" Click="Resume_Click" HorizontalContentAlignment="Left"><StackPanel><TextBlock Text="{Binding Title.Name}" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Description}" FontSize="11" Foreground="#B2B8C4" Margin="0,4,0,0"/></StackPanel></Button></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
+       </StackPanel></Border>
+       <Border Grid.Column="2" Background="{StaticResource Surface}" CornerRadius="14" Padding="18"><StackPanel>
+        <TextBlock Text="Watchlist" FontSize="19" FontWeight="SemiBold"/><TextBlock x:Name="WatchlistEmpty" Text="Save a title with the + button." Foreground="#9AA1AE" Margin="0,10"/>
+        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto"><ItemsControl x:Name="WatchlistList"><ItemsControl.ItemTemplate><DataTemplate><DockPanel Margin="0,9,0,0"><Button Content="−" DockPanel.Dock="Right" Tag="{Binding}" Click="Watchlist_Click" ToolTip="Remove from Watchlist"/><Button Tag="{Binding}" Click="Open_Click" HorizontalContentAlignment="Left"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/></Button></DockPanel></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
+       </StackPanel></Border>
+      </Grid>
+      <DockPanel Margin="0,0,0,18"><TextBlock x:Name="ResultsLabel" FontSize="20" FontWeight="SemiBold"/><CheckBox x:Name="Alphabetical" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="Sort A–Z" Click="Filter_Changed" VerticalAlignment="Center"/></DockPanel>
+      <ItemsControl x:Name="Cards"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+       <ItemsControl.ItemTemplate><DataTemplate><StackPanel Width="170" Margin="0,0,16,25">
+        <Button Tag="{Binding}" Click="Open_Click" Padding="0" Background="#1E2430" HorizontalContentAlignment="Stretch"><StackPanel>
+         <Grid Height="215"><TextBlock Text="▶" FontSize="45" Foreground="#4B5262" HorizontalAlignment="Center" VerticalAlignment="Center"/><Image Source="{Binding Artwork, Converter={StaticResource Poster}}" Stretch="UniformToFill"/>
+          <Border VerticalAlignment="Top" HorizontalAlignment="Left" Background="#DD101217" CornerRadius="4" Margin="7" Padding="5,3"><TextBlock Text="{Binding Badges}" FontSize="10" FontWeight="Bold"/></Border>
+          <Border VerticalAlignment="Bottom" HorizontalAlignment="Left" Background="#DD101217" CornerRadius="10" Margin="7" Padding="8,4"><TextBlock Text="{Binding SeasonBadge}" FontSize="11"/></Border>
+         </Grid>
+         <TextBlock Text="{Binding Name}" Margin="8,10" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" ToolTip="{Binding Name}"/>
+        </StackPanel></Button>
+        <DockPanel Margin="0,7,0,0"><Button Content="♡" Tag="{Binding}" Click="Favorite_Click" Padding="8,3" DockPanel.Dock="Right" ToolTip="Toggle favorite"/><Button Content="+" Tag="{Binding}" Click="Watchlist_Click" Padding="8,3" Margin="0,0,4,0" DockPanel.Dock="Right" ToolTip="Toggle Watchlist"/><TextBlock Text="{Binding Subtitle}" Foreground="#949DAC" FontSize="11" VerticalAlignment="Center"/></DockPanel>
+       </StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,24"><Button x:Name="PreviousPage" Content="← Previous" Click="Previous_Click"/><TextBlock x:Name="PageLabel" Margin="18,0" VerticalAlignment="Center"/><Button x:Name="NextPage" Content="Next →" Click="Next_Click"/></StackPanel>
+     </StackPanel>
+    </ScrollViewer>
+    <Grid x:Name="EpisodesPanel" Grid.Row="2" Visibility="Collapsed"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+     <Button Content="← Back to library" HorizontalAlignment="Left" Click="BackToLibrary_Click"/>
+     <TextBlock x:Name="SeriesTitle" Grid.Row="1" FontSize="28" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,24,0,14"/>
+     <ComboBox x:Name="SeasonList" Grid.Row="2" Width="200" HorizontalAlignment="Left" Margin="0,0,0,16" SelectionChanged="Season_Changed" DisplayMemberPath="Name"/>
+     <ListBox x:Name="EpisodesList" Grid.Row="3"><ListBox.ItemTemplate><DataTemplate><Button Tag="{Binding}" Click="Episode_Click" HorizontalContentAlignment="Stretch" Padding="16"><DockPanel><TextBlock Text="▶" DockPanel.Dock="Right" Foreground="{StaticResource Accent}" Margin="14,0" VerticalAlignment="Center"/><StackPanel><TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontWeight="SemiBold"/><TextBlock Text="{Binding Subtitle}" Foreground="#9DA6B5" Margin="0,6,0,0"/></StackPanel></DockPanel></Button></DataTemplate></ListBox.ItemTemplate></ListBox>
+    </Grid>
+   </Grid>
+  </Grid>
+ </Grid>
+</Window>

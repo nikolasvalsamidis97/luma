@@ -1,0 +1,4 @@
+# Local sandbox only. Copy to .dev.vars; never commit actual secrets.
+STRIPE_SECRET_KEY=sk_test_REPLACE
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE
+LUMA_PUBLIC_URL=https://REPLACE.workers.dev

@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "luma-licenses-test",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+  "workers_dev": true,
+  "observability": { "enabled": false },
+  "triggers": { "crons": ["17 * * * *"] },
+  "vars": {
+    "BILLING_MODE": "test",
+    "STRIPE_PRICE_ID": "YOUR_STRIPE_TEST_PRICE_ID",
+    "STRIPE_PORTAL_CONFIGURATION": "YOUR_STRIPE_TEST_PORTAL_CONFIGURATION"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "luma-licenses-test",
+    "database_id": "YOUR_D1_DATABASE_ID",
+    "migrations_dir": "migrations"
+  }]
+}

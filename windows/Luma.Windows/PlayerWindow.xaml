@@ -1,0 +1,17 @@
+<Window x:Class="Luma.Windows.PlayerWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF" Title="Luma Player" Width="1200" Height="780" MinWidth="800" MinHeight="500" WindowStartupLocation="CenterOwner" KeyDown="Player_KeyDown">
+ <Grid Background="Black"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Border Background="#14171E" Padding="16,12"><DockPanel><Button Content="←" Click="Back_Click" DockPanel.Dock="Left" ToolTip="Back to episode list or library" Margin="0,0,15,0"/><Button Content="⛶" Click="Fullscreen_Click" DockPanel.Dock="Right" ToolTip="Fullscreen (F11); Escape to exit"/><TextBlock x:Name="VideoTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/></DockPanel></Border>
+  <vlc:VideoView x:Name="Video" Grid.Row="1" Background="Black"/>
+  <Border Grid.Row="2" Background="#191D26" Padding="20,14"><StackPanel>
+   <DockPanel Margin="0,0,0,8"><TextBlock x:Name="PlaybackStatus" Text="Opening…" Foreground="#B7BFCC" TextWrapping="Wrap"/><Button x:Name="NextEpisode" DockPanel.Dock="Right" HorizontalAlignment="Right" Content="Play next →" Style="{StaticResource Primary}" Click="Next_Click" Visibility="Collapsed"/></DockPanel>
+   <DockPanel><TextBlock x:Name="Elapsed" Text="0:00" VerticalAlignment="Center" Width="58"/><TextBlock x:Name="Duration" DockPanel.Dock="Right" Text="0:00" VerticalAlignment="Center" Width="58" TextAlignment="Right"/><Slider x:Name="Seek" Minimum="0" Maximum="1" PreviewMouseLeftButtonDown="Seek_Start" PreviewMouseLeftButtonUp="Seek_End" PreviewKeyUp="Seek_KeyUp" AutomationProperties.Name="Playback position"/></DockPanel>
+   <DockPanel Margin="0,12,0,0"><Button x:Name="PauseButton" Content="⏸" Click="Pause_Click" DockPanel.Dock="Left" ToolTip="Play or pause (Space)"/>
+    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+     <Button x:Name="QualityButton" Content="Quality" Click="Quality_Click" Visibility="Collapsed" Margin="8,0"/>
+     <Button Content="Audio" Click="Audio_Click" Margin="8,0"/><Button Content="Subtitles" Click="Subtitles_Click" Margin="0,0,18,0"/>
+     <TextBlock Text="Volume" VerticalAlignment="Center" FontSize="12"/><Slider x:Name="Volume" Width="120" Minimum="0" Maximum="100" Value="80" ValueChanged="Volume_Changed" Margin="10,0,0,0" AutomationProperties.Name="Volume"/>
+    </StackPanel>
+   </DockPanel>
+  </StackPanel></Border>
+ </Grid>
+</Window>

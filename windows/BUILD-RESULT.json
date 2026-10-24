@@ -1,0 +1,15 @@
+{
+  "platform": "Windows x64",
+  "status": "preview; native Windows playback/UI verification pending",
+  "sdk": "10.0.402",
+  "runtime": "10.0.13",
+  "core_checks_passed": 58,
+  "native_vlc_plugins": 321,
+  "archive_bytes": 113534324,
+  "sha256": "2b546d8cf6f85249614297658bf616432bc251ad8a93b2232ddab7e6fd74fbfd",
+  "publicly_released": true,
+  "version": "0.7.2",
+  "m3u_support": true,
+  "multiple_playlists": true,
+  "release_url": "https://github.com/nikolasvalsamidis97/luma/releases/tag/v0.7.2"
+}

@@ -1,0 +1,37 @@
+Luma includes VLCKit 3.7.2 and its bundled libVLC playback engine, by VideoLAN and its contributors.
+VLCKit is licensed under the GNU Lesser General Public License, version 2.1 or later.
+The accompanying VLCKit-COPYING.txt contains the license text in the built application.
+
+Upstream source and build instructions:
+https://code.videolan.org/videolan/VLCKit
+https://github.com/videolan/vlckit
+Release packaging reference:
+https://raw.githubusercontent.com/videolan/vlckit/master/Packaging/VLCKit.json
+Unmodified binary distribution:
+https://download.videolan.org/pub/cocoapods/prod/VLCKit-3.7.2-3e42ae47-79128878.tar.xz
+VLCKit source revision: 3e42ae47
+libVLC source revision: 79128878
+
+The framework is dynamically linked and unmodified. Users may replace the bundled framework with a compatible modified build and re-sign their local application. Reverse engineering for debugging modifications to LGPL-covered libraries is permitted. Luma claims no ownership of provider content.
+
+
+Luma for Windows includes these independently distributed components:
+
+LibVLCSharp / LibVLCSharp.WPF 3.10.2 — VideoLAN and contributors
+License: LGPL-2.1-or-later
+Source and license: https://code.videolan.org/videolan/LibVLCSharp/-/tree/3.10.2
+
+LibVLC (VideoLAN.LibVLC.Windows 3.0.24) — VideoLAN and contributors
+License: LGPL-2.1-or-later; bundled codec libraries and plugins have their own notices.
+Source: https://code.videolan.org/videolan/vlc/-/tree/3.0.24
+Official source releases: https://download.videolan.org/pub/videolan/vlc/3.0.24/
+Keep the libvlc directory, COPYING files, and included plugin notices with this application.
+These libraries are dynamically linked and can be replaced with compatible versions.
+
+.NET 10 / Windows Desktop Runtime — Microsoft and contributors
+MIT license and bundled third-party licenses.
+Source: https://github.com/dotnet/runtime
+WPF source: https://github.com/dotnet/wpf
+The runtime's LICENSE.txt and ThirdPartyNotices.txt are included in the distribution.
+
+No TV content or IPTV subscription is included. This preview is not endorsed by VideoLAN or Microsoft.
