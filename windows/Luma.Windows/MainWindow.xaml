@@ -4,6 +4,8 @@
    <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Width="420" VerticalAlignment="Center">
     <TextBlock Text="▶ luma" Foreground="{StaticResource Accent}" FontSize="48" FontWeight="Bold"/>
     <TextBlock Text="Your TV, at home on Windows." FontSize="22" Margin="0,12,0,8"/>
+    <TextBlock Text="Free early access · 3-day trial coming soon" Foreground="{StaticResource Accent}" Margin="0,0,0,8"/>
+    <Button Content="Upgrade to full version" Click="Access_Click" Margin="0,0,0,16"/>
     <TextBlock Text="Connect your Xtream Codes account or M3U link." Foreground="#9AA1AE" Margin="0,0,0,25"/>
     <StackPanel x:Name="SavedLoginPanel" Visibility="Collapsed" Margin="0,0,0,12"><TextBlock Text="Saved playlists" Margin="0,0,0,8"/><ComboBox x:Name="SavedLoginList" DisplayMemberPath="DisplayName"/><Button Content="Open saved playlist" Click="OpenSaved_Click" Margin="0,8,0,0"/><Button Content="Manage playlists" Click="ManagePlaylists_Click" Margin="0,6,0,0"/></StackPanel>
     <TextBlock Text="Playlist name (optional)" Margin="0,0,0,8"/><TextBox x:Name="PlaylistNameInput" ToolTip="e.g. Home TV" Margin="0,0,0,14"/>
@@ -36,7 +38,10 @@
     </StackPanel>
     <TextBlock Grid.Row="2" Text="CATEGORIES" Foreground="#858E9F" FontSize="11" Margin="10,20,0,12"/>
     <ListBox Grid.Row="3" x:Name="CategoryList" DisplayMemberPath="Name" SelectionChanged="Category_Changed" FontSize="12"/>
-    <StackPanel Grid.Row="4" Margin="8,16,0,0"><TextBlock x:Name="AccountLabel" TextTrimming="CharacterEllipsis" Foreground="#9BA3B2" FontSize="11"/><ComboBox x:Name="PlaylistSwitcher" DisplayMemberPath="DisplayName" SelectionChanged="Playlist_Changed" Margin="0,10,0,0" AutomationProperties.Name="Current playlist"/>
+    <StackPanel Grid.Row="4" Margin="8,16,0,0">
+    <Border Background="#282126" CornerRadius="8" Padding="10" Margin="0,0,0,8"><StackPanel><TextBlock Text="Free early access" Foreground="{StaticResource Accent}" FontWeight="SemiBold"/><TextBlock Text="3-day trial coming soon" Foreground="#9BA3B2" FontSize="11" Margin="0,5,0,0"/></StackPanel></Border>
+    <Button Content="Upgrade to full version" Click="Access_Click" Margin="0,0,0,16"/>
+    <TextBlock x:Name="AccountLabel" TextTrimming="CharacterEllipsis" Foreground="#9BA3B2" FontSize="11"/><ComboBox x:Name="PlaylistSwitcher" DisplayMemberPath="DisplayName" SelectionChanged="Playlist_Changed" Margin="0,10,0,0" AutomationProperties.Name="Current playlist"/>
     <Button Content="+ Add playlist" Click="AddPlaylist_Click" Margin="0,8,0,0"/><Button Content="Manage playlists" Click="ManagePlaylists_Click" Margin="0,6,0,0"/>
     <Button Content="Disconnect" HorizontalAlignment="Left" Background="Transparent" Click="SignOut_Click" Margin="-10,8,0,0"/></StackPanel>
    </Grid></Border>

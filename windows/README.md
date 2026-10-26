@@ -27,7 +27,7 @@ The SDK is build-time tooling only. `EnableWindowsTargeting` downloads Microsoft
 - Per-account Continue Watching, Watchlist and Favorites; movie/episode resume and next-episode progression across numbered regular seasons. Back leaves the episode list and selected season intact.
 - Provider-specific season badges loaded serially, with a 600 ms spacing, 30-second 403/429 cooldown and bounded 30-minute cache. Unknown metadata is distinct from a failed request.
 - Explicit 4K/1080p/MULTISUB badges; generic MULTI AUDIO is not treated as multiple subtitles.
-- Embedded VLC, hardware-decoding preference, 4-second on-demand / 1.5-second live buffering, seek/volume, F11 fullscreen, Escape and Space shortcuts.
+- Embedded VLC, hardware-decoding preference, 4-second on-demand / 1.5-second live buffering, seek/volume, F11 fullscreen, Escape and Space shortcuts, ←/→ 10-second skips, click-to-play/pause and double-click fullscreen.
 - Audio and subtitle selectors beside one another; external subtitles; size, text/background colors, opacity, signed delay and bottom offset. Style application reloads with position/pause/track restoration where the stream supports it.
 - HLS quality choices from a master playlist exposed with a .m3u8 extension; resolution caps keep the master URL and rendition groups. Embedded alternate video tracks also appear. No invented resolutions for a single stream.
 - Windows DPAPI encrypts provider credentials, progress and saved subtitle style for the current Windows login. Files are replaced atomically. Provider-bearing URLs and raw failures are never shown in error dialogs.
@@ -39,4 +39,6 @@ The core fixture checks run on macOS without connecting to a real provider. They
 
 An actual Windows UI/playback test is required before calling this a stable release. Check launch from a clean Windows account without VLC/.NET installed, a provider stream, hardware-decoded 4K, seek/resume, subtitles/style reload, audio switching, fullscreen, and Play next. Windows native GUI and GPU behavior cannot be exercised on this Mac. No Windows runtime result is implied by successful compilation.
 
-This is an unsigned x64 preview, not a native ARM64 release. The first port does not yet implement Mac-style auto-hiding player controls, a visible EPG panel, playback-observed thumbnail metadata, or paid licensing. The free 0.7.2 release includes this Windows preview; Cloudflare/Stripe setup remains separate and is not enabled in these downloads. Native Windows UI/playback verification and code signing are still pending.
+This is an unsigned x64 preview, not a native ARM64 release. The first port does not yet implement Mac-style auto-hiding player controls, a visible EPG panel, playback-observed thumbnail metadata, or paid licensing. The Windows 0.7.3 preview is included alongside Mac 0.8.0. Windows remains free; the live trial and subscription apply only to the Mac download. Native Windows UI/playback verification and code signing are still pending.
+
+The login screen and sidebar include a Free early access badge and an Upgrade to full version dialog explaining the planned 3-day trial and €4/month subscription. Licensing and checkout remain disabled in the Windows preview.

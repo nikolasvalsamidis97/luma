@@ -1,5 +1,5 @@
 """Loopback-only integration fixture. NEVER deploy this test wrapper."""
-import json, os, sys
+import json, os, sys, time
 from pathlib import Path
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'licensing-server'))
@@ -11,7 +11,9 @@ real=Application(service)
 def app(env,start):
     path=env['PATH_INFO']
     if path=='/test/expire':
-        with service.db() as db: db.execute("UPDATE licenses SET trial_end=0 WHERE kind='standard'")
+        with service.db() as db: db.execute("UPDATE licenses SET trial_end=? WHERE kind='standard'", (time.time()-1,))
+    elif path=='/test/last-hour':
+        with service.db() as db: db.execute("UPDATE licenses SET trial_end=? WHERE kind='standard'", (time.time()+1795,))
     elif path=='/test/revoke': service.revoke(lid)
     elif path=='/test/restore':
         with service.db() as db: db.execute('UPDATE licenses SET revoked=0 WHERE id=?',(lid,))

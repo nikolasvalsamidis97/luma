@@ -30,6 +30,17 @@ public partial class MainWindow : Window
     private MediaItem? series;
     private SeriesDetails? seriesDetails;
     private const int PageSize = 48;
+    private void Access_Click(object sender,RoutedEventArgs e) {
+        var panel=new StackPanel {Margin=new Thickness(28),Width=400};
+        panel.Children.Add(new TextBlock {Text="Luma full version",FontSize=28,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,18)});
+        panel.Children.Add(new TextBlock {Text="Free early access",FontSize=16,Foreground=(System.Windows.Media.Brush)FindResource("Accent"),Margin=new Thickness(0,0,0,12)});
+        panel.Children.Add(new TextBlock {Text="You’re using the free Windows preview. Trials and upgrades aren’t available yet, so there’s no countdown and no payment required in this release.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,22)});
+        panel.Children.Add(new TextBlock {Text="Coming soon: 3-day free trial",FontSize=19,FontWeight=FontWeights.SemiBold,Margin=new Thickness(0,0,0,10)});
+        panel.Children.Add(new TextBlock {Text="Then €4/month for the full version. No card to start. No automatic charge. Subscribe only if you choose to continue.",TextWrapping=TextWrapping.Wrap,Margin=new Thickness(0,0,0,22)});
+        panel.Children.Add(new TextBlock {Text="TV content and provider subscriptions are not included.",TextWrapping=TextWrapping.Wrap,FontSize=12});
+        var dialog=new Window {Title="Luma access",Owner=this,Content=panel,SizeToContent=SizeToContent.WidthAndHeight,ResizeMode=ResizeMode.NoResize,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+        var done=new Button {Content="Done",Margin=new Thickness(0,24,0,0)}; done.Click+=(_,_)=>dialog.Close(); panel.Children.Add(done); dialog.ShowDialog();
+    }
     public MainWindow()
     {
         InitializeComponent(); searchTimer.Tick += (_, _) => { searchTimer.Stop(); ApplyFilter(); };

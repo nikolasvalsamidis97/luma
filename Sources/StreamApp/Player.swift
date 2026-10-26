@@ -62,6 +62,7 @@ private final class PlaybackDisplayAssertion {
     private var subtitleFiles: [URL] = []
     private var pauseAfterSeek: (deadline: Date, target: Int32)?
     private var pendingResume: (milliseconds: Int32, paused: Bool)?
+    private var pausedSeek: Int32?
     private var restoringSubtitle: Int32?
     private var restoredDelay = false
     private let isLive: Bool
@@ -107,7 +108,7 @@ private final class PlaybackDisplayAssertion {
             hlsResolutions = []; qualities = []; selectedQualityID = "auto"; qualityDiscoveryFinished = false
         }
         stop(); self.url = url; started = Date(); lastProgress = Date(); lastTime = 0; hasAdvanced = false; userPaused = false; finished = false; status = "Connecting…"; buffering = true; failed = false
-        restoredDelay = false; pauseAfterSeek = nil; nextTrackRefresh = .distantPast
+        restoredDelay = false; pauseAfterSeek = nil; pausedSeek = nil; nextTrackRefresh = .distantPast
         nearEnd = false; position = 0; elapsed = "00:00"; duration = "00:00"; seekable = false
         lastProgressReport = .distantPast; lastReportedSnapshot = nil
         restoringProgressPosition = pendingResume?.milliseconds
@@ -127,7 +128,17 @@ private final class PlaybackDisplayAssertion {
     }
     func retry() { if let url { play(url) } }
     func stop() { if timer != nil { reportProgress() }; qualityTask?.cancel(); qualityTask = nil; timer?.invalidate(); timer = nil; engine.stop(); playing = false; buffering = false; displayAssertion.setActive(false) }
-    func toggle() { pauseAfterSeek = nil; if finished { retry(); return }; if engine.isPlaying { reportProgress(); userPaused = true; engine.pause(); displayAssertion.setActive(false) } else { userPaused = false; lastProgress = Date(); engine.play(); displayAssertion.setActive(true) } }
+    func toggle() {
+        pauseAfterSeek = nil
+        if finished { retry(); return }
+        if engine.isPlaying {
+            reportProgress(); userPaused = true; engine.pause(); displayAssertion.setActive(false)
+        } else {
+            if let target = pausedSeek { engine.time = VLCTime(int: target); pausedSeek = nil }
+            if pendingResume?.paused == true { pendingResume?.paused = false }
+            userPaused = false; lastProgress = Date(); engine.play(); displayAssertion.setActive(true)
+        }
+    }
     func playNextItem(_ url: URL) {
         let previous = engine
         stop(); previous.drawable = nil
@@ -140,8 +151,23 @@ private final class PlaybackDisplayAssertion {
         play(url)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { _ = previous }
     }
-    func seek(_ value: Double) { restoringProgressPosition = nil; engine.position = Float(value) }
-    func skip(_ seconds: Int32) { engine.jumpForward(seconds) }
+    func seek(_ value: Double) { pausedSeek = nil; restoringProgressPosition = nil; engine.position = Float(value) }
+    func skip(_ seconds: Int32) {
+        guard !isLive, engine.isSeekable, engine.media?.length.intValue ?? 0 > 0 else { return }
+        let wasPaused = userPaused || engine.state == .paused || pauseAfterSeek != nil || pendingResume?.paused == true
+        let current = pausedSeek ?? pendingResume?.milliseconds ?? pauseAfterSeek?.target ?? engine.time.intValue
+        pendingResume = nil; pauseAfterSeek = nil; restoringProgressPosition = nil
+        let length = Int64(engine.media?.length.intValue ?? 0)
+        let target = min(max(0, Int64(current) + Int64(seconds) * 1000), max(0, length - 500))
+        if wasPaused {
+            // VLC's time cache does not reliably update while paused. Retain the
+            // requested position for the timeline, repeated skips and saved progress.
+            pausedSeek = Int32(target)
+            engine.time = VLCTime(int: Int32(target))
+            engine.gotoNextFrame()
+            update()
+        } else { engine.time = VLCTime(int: Int32(target)) }
+    }
     func selectSubtitle(_ id: Int32) {
         preferredSubtitle = id; selectedSubtitle = id; restoringSubtitle = nil
         engine.currentVideoSubTitleIndex = id
@@ -188,7 +214,7 @@ private final class PlaybackDisplayAssertion {
         else { reloadEngine() }
     }
     private func reloadEngine() {
-        let resume = pendingResume ?? pauseAfterSeek.map { ($0.target, true) } ??
+        let resume = pausedSeek.map { ($0, true) } ?? pendingResume ?? pauseAfterSeek.map { ($0.target, true) } ??
             (!isLive && engine.isSeekable ? (max(0, engine.time.intValue), userPaused || finished) : nil)
         let track = preferredSubtitle ?? restoringSubtitle ?? engine.currentVideoSubTitleIndex
         let audio = restoringAudio ?? audioTracks.first { $0.id == engine.currentAudioTrackIndex }
@@ -285,7 +311,7 @@ private final class PlaybackDisplayAssertion {
             if !restoredDelay {
                 engine.currentVideoSubTitleDelay = SubtitleAppearance.delayMicroseconds(subtitleDelay); restoredDelay = true
             }
-            if let resume = pendingResume, engine.isSeekable, engine.time.intValue > 0 {
+            if let resume = pendingResume, engine.isPlaying, engine.isSeekable, engine.time.intValue > 0 {
                 engine.time = VLCTime(int: resume.milliseconds)
                 pendingResume = nil
                 // Let the first sought frame and subtitle cue decode before pausing.
@@ -301,7 +327,7 @@ private final class PlaybackDisplayAssertion {
             updateMediaTracks(); nextTrackRefresh = Date().addingTimeInterval(1.5)
         }
         let now = Date()
-        let currentTime = engine.time.intValue
+        let currentTime = pausedSeek ?? engine.time.intValue
         if currentTime != lastTime && currentTime > 0 {
             hasAdvanced = true; lastProgress = now; lastTime = currentTime
         }
@@ -322,9 +348,9 @@ private final class PlaybackDisplayAssertion {
         else if playing || recentlyAdvanced { status = "Playing" }
         nearEnd = !isLive && !failed && EpisodeSequence.shouldOfferNext(elapsed: Double(currentTime) / 1000, duration: Double(length) / 1000, finished: finished)
         displayAssertion.setActive(!userPaused && !finished && !failed && (playing || buffering))
-        position = max(0, min(1, Double(engine.position)))
+        position = max(0, min(1, pausedSeek.map { length > 0 ? Double($0) / Double(length) : 0 } ?? Double(engine.position)))
         seekable = engine.isSeekable
-        elapsed = engine.time.stringValue
+        elapsed = pausedSeek.map { VLCTime(int: $0).stringValue } ?? engine.time.stringValue
         duration = engine.media?.length.stringValue ?? "00:00"
         if let target = restoringProgressPosition, currentTime > 0, currentTime >= target {
             restoringProgressPosition = nil
@@ -333,7 +359,7 @@ private final class PlaybackDisplayAssertion {
     }
     private func reportProgress() {
         guard !isLive, !failed, restoringProgressPosition == nil, pendingResume == nil, pauseAfterSeek == nil else { return }
-        let snapshot = PlaybackSnapshot(seconds: max(0, Double(engine.time.intValue) / 1000),
+        let snapshot = PlaybackSnapshot(seconds: max(0, Double(pausedSeek ?? engine.time.intValue) / 1000),
             duration: max(0, Double(engine.media?.length.intValue ?? 0) / 1000), finished: finished || engine.state == .ended)
         guard snapshot != lastReportedSnapshot, snapshot.seconds > 0 || snapshot.finished else { return }
         onProgress?(snapshot)
@@ -343,6 +369,7 @@ private final class PlaybackDisplayAssertion {
 
 /// Keep a single video surface alive across fullscreen transitions and control visibility changes.
 @MainActor final class PlayerVideoContainer: NSView {
+    override var acceptsFirstResponder: Bool { true }
     let video = VLCVideoView()
     weak var presentation: PlayerPresentation?
     override init(frame: NSRect) {
@@ -370,6 +397,8 @@ struct VideoSurface: NSViewRepresentable {
     func makeNSView(context: Context) -> PlayerVideoContainer {
         let view = PlayerVideoContainer()
         view.presentation = presentation
+        presentation.togglePlayback = { [weak player] in player?.toggle() }
+        presentation.skipPlayback = { [weak player] seconds in player?.skip(seconds) }
         player.engine.drawable = view.video
         return view
     }
@@ -493,7 +522,11 @@ struct PlayerScreen: View {
                     HStack { Text(player.elapsed).monospacedDigit(); Slider(value: Binding(get: { player.position }, set: { player.seek($0) }), in: 0...1).disabled(!player.seekable); Text(player.duration).monospacedDigit() }.font(.caption)
                 }
                 HStack(spacing: 24) {
-                    Button { player.toggle() } label: { Image(systemName: player.finished ? "arrow.counterclockwise" : player.playing ? "pause.fill" : "play.fill").font(.title2).frame(width: 28) }.help("Play or pause")
+                    Button { player.toggle() } label: { Image(systemName: player.finished ? "arrow.counterclockwise" : player.playing ? "pause.fill" : "play.fill").font(.title2).frame(width: 28) }.help("Play or pause (Space, or click the video)")
+                    if item.kind != .live {
+                        Button { player.skip(-10) } label: { Image(systemName: "gobackward.10") }.help("Back 10 seconds (←)").accessibilityLabel("Back 10 seconds").disabled(!player.seekable)
+                        Button { player.skip(10) } label: { Image(systemName: "goforward.10") }.help("Forward 10 seconds (→)").accessibilityLabel("Forward 10 seconds").disabled(!player.seekable)
+                    }
                     if item.kind == .live { Label("LIVE", systemImage: "circle.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.accent) }
                     Spacer()
                     if player.qualities.count > 1 {

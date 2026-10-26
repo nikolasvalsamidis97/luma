@@ -19,10 +19,12 @@ public partial class PlayerWindow : Window
     private LibVLC? vlc;
     private MediaPlayer? player;
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly DispatcherTimer clickTimer = new();
     private readonly CancellationTokenSource lifetime = new();
     private SubtitleStyle style = Storage.LoadStyle();
     private bool seeking, closing, fullscreen, finished, restorePaused;
     private long resumeAt, subtitleDelay, lastSave;
+    private long? pausedSeek;
     private int resumeAttempts, selectedAudio = int.MinValue, selectedSub = int.MinValue, qualityGeneration;
     private IReadOnlyList<QualityOption> qualities = [];
     private readonly List<string> subtitleFiles = [];
@@ -30,11 +32,14 @@ public partial class PlayerWindow : Window
     private WindowState oldState;
     private Rect oldBounds;
     [DllImport("kernel32.dll")] private static extern uint SetThreadExecutionState(uint flags);
+    [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
     public PlayerWindow(Func<MediaItem,Uri> resolveStream, MediaItem title, MediaItem current, SeriesDetails? episodes, long position, Action<MediaItem,long,long,bool,MediaItem?> save)
     {
         this.resolveStream=resolveStream; this.title=title; this.current=current; this.episodes=episodes; this.save=save; resumeAt=position;
         InitializeComponent(); Loaded += (_,_) => Start(true); timer.Tick += Tick;
-        Closing += (_,_) => { closing=true; lifetime.Cancel(); timer.Stop(); Save(); SetThreadExecutionState(0x80000000); Video.MediaPlayer=null; player?.Stop(); player?.Dispose(); vlc?.Dispose(); };
+        clickTimer.Interval=TimeSpan.FromMilliseconds(GetDoubleClickTime());
+        clickTimer.Tick+=(_,_)=>{ clickTimer.Stop(); if(!closing) Pause_Click(this,new RoutedEventArgs()); };
+        Closing += (_,_) => { closing=true; lifetime.Cancel(); timer.Stop(); clickTimer.Stop(); Save(); SetThreadExecutionState(0x80000000); Video.MediaPlayer=null; player?.Stop(); player?.Dispose(); vlc?.Dispose(); };
     }
     private void Start(bool rebuild)
     {
@@ -49,7 +54,7 @@ public partial class PlayerWindow : Window
                 player.EncounteredError += (_,_) => Dispatcher.BeginInvoke(() => { if (!closing && player==source) { PlaybackStatus.Text="This video couldn't be played. Check your connection or try another provider entry."; SetThreadExecutionState(0x80000000); } });
                 Video.MediaPlayer=player;
             }
-            finished=false; resumeAttempts=0; lastSave=0; VideoTitle.Text=current.Name; PlaybackStatus.Text="Opening…"; NextEpisode.Visibility=Visibility.Collapsed;
+            finished=false; pausedSeek=null; resumeAttempts=0; lastSave=0; VideoTitle.Text=current.Name; PlaybackStatus.Text="Opening…"; NextEpisode.Visibility=Visibility.Collapsed;
             using var media=new Media(vlc!,resolveStream(current));
             media.AddOption(":network-caching="+(current.Kind==LibraryKind.Live ? "1500" : "4000"));
             foreach (var file in subtitleFiles) media.AddSlave(MediaSlaveType.Subtitle,4,new Uri(file));
@@ -78,7 +83,7 @@ public partial class PlayerWindow : Window
             if (Math.Abs(player.Time-resumeAt)<2500 || resumeAttempts++>12) { resumeAt=0; ApplyTracks(); if (restorePaused) { player.SetPause(true); restorePaused=false; } }
             else player.Time=resumeAt;
         } else if (playing && resumeAt==0) { ApplyTracks(); if (restorePaused) { player.SetPause(true); restorePaused=false; } }
-        long duration=Math.Max(0,player.Length), elapsed=Math.Max(0,player.Time);
+        long duration=Math.Max(0,player.Length), elapsed=Math.Max(0,pausedSeek ?? player.Time);
         if (!seeking) { Seek.Maximum=Math.Max(1,duration); Seek.Value=Math.Min(elapsed,Seek.Maximum); }
         Seek.IsEnabled=player.IsSeekable && duration>0;
         Elapsed.Text=FormatTime(elapsed); Duration.Text=current.Kind==LibraryKind.Live ? "LIVE" : FormatTime(duration);
@@ -96,9 +101,9 @@ public partial class PlayerWindow : Window
         if (selectedSub!=int.MinValue && (selectedSub==-1 || player.SpuDescription.Any(t=>t.Id==selectedSub))) { player.SetSpu(selectedSub); selectedSub=int.MinValue; }
         player.SetSpuDelay(subtitleDelay);
     }
-    private void Save() { if (player!=null && resumeAt==0) save(current,Math.Max(0,player.Time),Math.Max(0,player.Length),finished,episodes?.Next(current)); }
+    private void Save() { if (player!=null && resumeAt==0) save(current,Math.Max(0,pausedSeek ?? player.Time),Math.Max(0,player.Length),finished,episodes?.Next(current)); }
     private static string FormatTime(long ms) => TimeSpan.FromMilliseconds(ms).ToString(ms>=3600000 ? @"h\:mm\:ss" : @"m\:ss");
-    private void Pause_Click(object sender,RoutedEventArgs e) { if (finished) { resumeAt=0; Start(false); } else player?.Pause(); Save(); }
+    private void Pause_Click(object sender,RoutedEventArgs e) { if (finished) { resumeAt=0; Start(false); } else if(player!=null) { if(!player.IsPlaying && pausedSeek is long target) { player.Time=target; pausedSeek=null; } player.Pause(); } Save(); }
     private void Back_Click(object sender,RoutedEventArgs e) => Close();
     private void Next_Click(object sender,RoutedEventArgs e)
     {
@@ -106,8 +111,22 @@ public partial class PlayerWindow : Window
         Save(); player?.Stop(); current=next; resumeAt=0; restorePaused=false; subtitleDelay=0; selectedAudio=selectedSub=int.MinValue; selectedQuality=null; subtitleFiles.Clear(); Start(true);
     }
     private void Seek_Start(object sender,MouseButtonEventArgs e) => seeking=true;
-    private void Seek_End(object sender,MouseButtonEventArgs e) { if (player?.IsSeekable==true) { resumeAt=0; player.Time=(long)Seek.Value; finished=false; } seeking=false; }
-    private void Seek_KeyUp(object sender,KeyEventArgs e) { if (player?.IsSeekable==true) { resumeAt=0; player.Time=(long)Seek.Value; finished=false; } }
+    private void Seek_End(object sender,MouseButtonEventArgs e) { if (player?.IsSeekable==true) { resumeAt=0; pausedSeek=null; player.Time=(long)Seek.Value; finished=false; } seeking=false; }
+    private void Skip(int seconds) {
+        if(current.Kind==LibraryKind.Live || player?.IsSeekable!=true || player.Length<=0) return;
+        resumeAt=0; restorePaused=false;
+        long target=Math.Clamp((pausedSeek ?? player.Time)+seconds*1000L,0,Math.Max(0,player.Length-500));
+        bool paused=!player.IsPlaying;
+        player.Time=target;
+        if(paused) { pausedSeek=target; player.NextFrame(); Tick(null,EventArgs.Empty); }
+        finished=false;
+    }
+    private void Video_Click(object sender,MouseButtonEventArgs e) {
+        clickTimer.Stop(); ((UIElement)sender).Focus();
+        if(e.ClickCount==2) ToggleFullscreen();
+        else if(e.ClickCount==1) clickTimer.Start();
+        e.Handled=true;
+    }
     private void Volume_Changed(object sender,RoutedPropertyChangedEventArgs<double> e) { if (player!=null) player.Volume=(int)e.NewValue; }
     private void Fullscreen_Click(object sender,RoutedEventArgs e) => ToggleFullscreen();
     private void ToggleFullscreen()
@@ -118,8 +137,10 @@ public partial class PlayerWindow : Window
     }
     private void Player_KeyDown(object sender,KeyEventArgs e)
     {
+        if(e.Handled || Keyboard.Modifiers!=ModifierKeys.None || Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or PasswordBox or ComboBox) return;
         if (e.Key==Key.F11 || e.Key==Key.Escape && fullscreen) { ToggleFullscreen(); e.Handled=true; }
-        else if (e.Key==Key.Space && Keyboard.FocusedElement is not TextBox && Keyboard.FocusedElement is not ComboBox) { Pause_Click(sender,e); e.Handled=true; }
+        else if (e.Key==Key.Space) { if(!e.IsRepeat) Pause_Click(sender,e); e.Handled=true; }
+        else if(e.Key==Key.Left || e.Key==Key.Right) { Skip(e.Key==Key.Left ? -10 : 10); e.Handled=true; }
     }
     private void Audio_Click(object sender,RoutedEventArgs e)
     {
@@ -145,7 +166,7 @@ public partial class PlayerWindow : Window
     private void Reload(bool rebuild)
     {
         if (player==null) return;
-        Save(); resumeAt=current.Kind==LibraryKind.Live ? 0 : Math.Max(0,player.Time); restorePaused=!player.IsPlaying;
+        Save(); resumeAt=current.Kind==LibraryKind.Live ? 0 : Math.Max(0,pausedSeek ?? player.Time); restorePaused=!player.IsPlaying;
         selectedAudio=player.AudioTrack; selectedSub=player.Spu; player.Stop(); Start(rebuild);
     }
     private void Subtitles_Click(object sender,RoutedEventArgs e)

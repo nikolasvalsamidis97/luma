@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>Luma</AssemblyName>
-    <Version>0.7.2</Version>
+    <Version>0.7.3</Version>
     <Product>Luma</Product>
     <Description>Luma for Windows — preview</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>

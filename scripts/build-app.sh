@@ -44,7 +44,7 @@ if $LICENSED; then
 import os, plistlib
 path=os.environ['LUMA_BUILD_PLIST']
 with open(path,'rb') as f: info=plistlib.load(f)
-info.update(LumaLicensingEnabled=True,LumaLicenseServerURL=os.environ['LUMA_LICENSE_SERVER_URL'],CFBundleShortVersionString='0.8.0',CFBundleVersion='10')
+info.update(LumaLicensingEnabled=True,LumaLicenseServerURL=os.environ['LUMA_LICENSE_SERVER_URL'],CFBundleShortVersionString='0.8.0',CFBundleVersion='14')
 with open(path,'wb') as f: plistlib.dump(info,f)
 PYPLIST
 fi

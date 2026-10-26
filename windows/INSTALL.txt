@@ -13,7 +13,8 @@ VLC playback engine and codecs. You do not need to install .NET, VLC, or codecs.
 This is an unsigned preview. Windows may warn about an unrecognized publisher.
 Only run copies from a source you trust. Production signing is not configured.
 
-F11: fullscreen. Escape: leave fullscreen. Space: play/pause.
+F11: fullscreen. Escape: leave fullscreen. Space or click video: play/pause.
+Left/right arrows: skip 10 seconds. Double-click video: fullscreen.
 Back returns to the selected episode list. Play next appears near the ending.
 Audio and Subtitles choose tracks provided by the video. Apply subtitle style
 briefly restarts playback and restores the position for seekable streams.
@@ -22,7 +23,7 @@ No TV service or content is included. Preview library titles are fictional.
 Credentials and saved progress are encrypted for your Windows login and stored
 in %LOCALAPPDATA%\Luma. Disconnect keeps saved playlists. Manage playlists lets you rename them or remove their saved credentials.
 Watchlist and progress stay on this PC; there is no Mac/Windows cloud sync.
-This preview follows the existing free Mac 0.7.0 release. Paid licensing is not
+This preview follows the existing free Mac release. Paid licensing is not
 enabled in either public release yet.
 
 See THIRD_PARTY_NOTICES.txt and the bundled license files for third-party code.

@@ -10,7 +10,7 @@ Checked October 24, 2026:
 
 ## Cloudflare implementation
 
-The Python/Gunicorn reference service remains available. The new JavaScript Worker preserves its API contract and uses D1 transactions, database seat-limit triggers and expiring per-license billing locks. Its 23 tests pass against the local Cloudflare D1 runtime; Stripe is simulated in these tests. Public deployment and real Stripe sandbox end-to-end verification remain required.
+The Python/Gunicorn reference service remains available. The JavaScript Worker preserves its API contract and uses D1 transactions, database seat-limit triggers and expiring per-license billing locks. Its 23 tests pass against the local Cloudflare D1 runtime; Stripe is simulated in these tests. On 26 October 2026, the hosted test Worker also passed a real Stripe sandbox checkout, signed webhook processing, paid entitlement refresh, cancellation at period end and immediate cancellation/revocation. See `../licensing-worker/README.md` for deployment status. The separate live Worker is connected, and live checkout/portal creation passed without a real payment. Mac 0.8.0 enables live licensing.
 
 Explicitly verify concurrent trial creation, atomic device-seat limits, checkout idempotency, signature verification, webhook ordering and revocation against the hosted database. Use indexed queries and avoid writing a new rate-limit record on every entitlement check. Cloudflare-managed secrets must hold the Stripe test key and webhook secret; they must never enter the public website, Swift bundle or source control.
 

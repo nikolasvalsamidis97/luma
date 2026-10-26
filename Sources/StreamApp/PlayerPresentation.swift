@@ -13,6 +13,9 @@ import SwiftUI
     private var observers: [NSObjectProtocol] = []
     private var eventMonitor: Any?
     private var hideTask: Task<Void, Never>?
+    private var clickTask: Task<Void, Never>?
+    var togglePlayback: (() -> Void)?
+    var skipPlayback: ((Int32) -> Void)?
     private var transitioning = false
 
     func attach(to window: NSWindow?, videoView: NSView) {
@@ -32,7 +35,7 @@ import SwiftUI
                 MainActor.assumeIsolated { self?.windowChanged(notification.name) }
             })
         }
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .keyDown]) { [weak self] event in
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .leftMouseUp, .keyDown]) { [weak self] event in
             let consumed = MainActor.assumeIsolated {
                 guard let self else { return false }
                 return self.handle(event) == nil
@@ -43,6 +46,7 @@ import SwiftUI
     }
     func detach() {
         hideTask?.cancel(); hideTask = nil
+        clickTask?.cancel(); clickTask = nil
         observers.forEach(NotificationCenter.default.removeObserver); observers = []
         if let eventMonitor { NSEvent.removeMonitor(eventMonitor) }; eventMonitor = nil
         window = nil; videoView = nil
@@ -69,14 +73,43 @@ import SwiftUI
         pointerOverControls = false
         revealControls()
     }
-    private func handle(_ event: NSEvent) -> NSEvent? {
-        guard event.window === window else { return event }
+    func handle(_ event: NSEvent) -> NSEvent? {
+        guard let window, event.window === window, window.attachedSheet == nil, NSApp.modalWindow == nil else { return event }
+        if event.type == .keyDown, !controlsPinned,
+           event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty,
+           !(window.firstResponder is NSText), !(window.firstResponder is NSTextField),
+           !(window.firstResponder is NSComboBox), !(window.firstResponder is NSPopUpButton) {
+            switch event.keyCode {
+            case 49:
+                if !event.isARepeat { togglePlayback?() }
+                revealControls(); return nil
+            case 123: skipPlayback?(-10); revealControls(); return nil
+            case 124: skipPlayback?(10); revealControls(); return nil
+            default: break
+            }
+        }
         if event.type == .keyDown, event.keyCode == 53, isFullscreen, !controlsPinned {
             toggleFullscreen(); return nil
         }
-        if event.type == .leftMouseDown, event.clickCount == 2, !controlsPinned,
-           let videoView, videoView.bounds.contains(videoView.convert(event.locationInWindow, from: nil)), !pointerOverControls {
-            toggleFullscreen(); return nil
+        if (event.type == .leftMouseDown || event.type == .leftMouseUp), !controlsPinned,
+           let videoView, videoView.bounds.contains(videoView.convert(event.locationInWindow, from: nil)),
+           let content = window.contentView,
+           let hit = content.hitTest(content.superview?.convert(event.locationInWindow, from: nil) ?? event.locationInWindow),
+           hit === videoView || hit.isDescendant(of: videoView) {
+            if event.type == .leftMouseDown {
+                clickTask?.cancel(); clickTask = nil
+                window.makeFirstResponder(videoView)
+                if event.clickCount == 2 { toggleFullscreen() }
+            } else if event.clickCount == 1 {
+                // Let a double-click enter fullscreen without briefly pausing the film.
+                clickTask?.cancel()
+                clickTask = Task { [weak self] in
+                    do { try await Task.sleep(for: .seconds(NSEvent.doubleClickInterval)) } catch { return }
+                    guard let self, !Task.isCancelled, self.window != nil, !self.controlsPinned else { return }
+                    self.togglePlayback?(); self.revealControls()
+                }
+            }
+            revealControls(); return nil
         }
         if event.type == .mouseMoved || event.type == .leftMouseDown || event.type == .keyDown { revealControls() }
         return event

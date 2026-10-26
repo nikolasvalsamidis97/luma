@@ -42,17 +42,75 @@ struct EpisodeFixtureLibrary: View {
         let app = NSApplication.shared; app.setActivationPolicy(.regular)
         let video = URL(fileURLWithPath: CommandLine.arguments[1])
         let model = PlayerModel(); model.volume = 0
+        let presentation = PlayerPresentation()
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 760), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         window.title = "Luma · Episode and power checks"; window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: PlayerScreen(player: model, close: { app.terminate(nil) }, item: MediaItem(streamID: "fixture", kind: .series, name: "Local playback checks"), url: video, client: nil).preferredColorScheme(.dark))
+        window.contentView = NSHostingView(rootView: PlayerScreen(player: model, close: { app.terminate(nil) }, item: MediaItem(streamID: "fixture", kind: .series, name: "Local playback checks"), url: video, client: nil, presentation: presentation).preferredColorScheme(.dark))
         window.center(); window.makeKeyAndOrderFront(nil); app.activate(ignoringOtherApps: true)
         Task { @MainActor in
-            func waitFor(_ label: String, _ predicate: () -> Bool) async {
+            @MainActor func waitFor(_ label: String, _ predicate: () -> Bool) async {
                 let end = Date().addingTimeInterval(15)
                 while !predicate(), Date() < end { try? await Task.sleep(for: .milliseconds(100)) }
                 precondition(predicate(), "Timeout: \(label)"); print("PASS: \(label)")
             }
             await waitFor("local playback") { model.engine.time.intValue > 500 }
+            // Exercise the production event router directly inside this test process.
+            // These events are never posted to the system or another app.
+            @MainActor func key(_ code: UInt16, repeatKey: Bool = false, flags: NSEvent.ModifierFlags = []) -> NSEvent {
+                NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0, windowNumber: window.windowNumber, context: nil, characters: "", charactersIgnoringModifiers: "", isARepeat: repeatKey, keyCode: code)!
+            }
+            precondition(presentation.handle(key(49)) == nil)
+            await waitFor("Space pauses playback") { model.status == "Paused" && model.engine.state == .paused && !model.engine.isPlaying }
+            _ = presentation.handle(key(49, repeatKey: true))
+            precondition(!model.engine.isPlaying, "Holding Space must not toggle repeatedly")
+            presentation.controlsPinned = true
+            precondition(presentation.handle(key(49)) != nil, "Popover input must be preserved")
+            presentation.controlsPinned = false
+            precondition(presentation.handle(key(49, flags: .command)) != nil, "Modified shortcuts must be preserved")
+            let input = NSTextView(frame: .zero)
+            window.contentView!.addSubview(input); window.makeFirstResponder(input)
+            precondition(presentation.handle(key(49)) != nil && presentation.handle(key(123)) != nil, "Text editing must not control playback")
+            window.makeFirstResponder(nil); input.removeFromSuperview()
+            precondition(presentation.handle(key(124)) == nil)
+            precondition(model.position > 0.33 && model.position < 0.45 && !model.engine.isPlaying)
+            _ = presentation.handle(key(49))
+            await waitFor("Right seeks forward on resume") { model.engine.time.intValue > 10000 && model.engine.time.intValue < 14000 && model.engine.isPlaying }
+            _ = presentation.handle(key(49))
+            await waitFor("Pause after forward seek") { model.engine.state == .paused }
+            _ = presentation.handle(key(123))
+            precondition(model.position < 0.14 && !model.engine.isPlaying)
+            _ = presentation.handle(key(49))
+            await waitFor("Left seeks backward on resume") { model.engine.time.intValue < 5000 && model.engine.isPlaying }
+            _ = presentation.handle(key(49))
+            await waitFor("Pause after backward seek") { model.engine.state == .paused }
+            _ = presentation.handle(key(123))
+            precondition(model.position == 0 && !model.engine.isPlaying, "Backward seek clamps at beginning")
+            _ = presentation.handle(key(124)); _ = presentation.handle(key(124))
+            precondition(abs(model.position - 2.0 / 3.0) < 0.01, "Repeated paused skips accumulate")
+            _ = presentation.handle(key(124))
+            precondition(model.position < 1 && model.position > 0.95, "Forward seek clamps before end")
+            _ = presentation.handle(key(123)); _ = presentation.handle(key(123)); _ = presentation.handle(key(123))
+            precondition(model.position == 0 && !model.engine.isPlaying)
+            @MainActor func mouse(_ type: NSEvent.EventType, _ point: NSPoint, clicks: Int = 1) -> NSEvent {
+                NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: 0, windowNumber: window.windowNumber, context: nil, eventNumber: 1, clickCount: clicks, pressure: 1)!
+            }
+            let center = NSPoint(x: 500, y: 350)
+            precondition(presentation.handle(mouse(.leftMouseDown, center)) == nil, "Video clicks must reach the player")
+            precondition(presentation.handle(mouse(.leftMouseUp, center)) == nil)
+            await waitFor("Click video resumes playback at beginning") { model.playing && model.engine.time.intValue < 3000 }
+            _ = presentation.handle(mouse(.leftMouseDown, center)); _ = presentation.handle(mouse(.leftMouseUp, center))
+            await waitFor("Click video pauses playback") { model.status == "Paused" }
+            precondition(presentation.handle(mouse(.leftMouseDown, NSPoint(x: 500, y: 30))) != nil, "Control bar clicks must not toggle the video")
+            _ = presentation.handle(mouse(.leftMouseDown, center)); _ = presentation.handle(mouse(.leftMouseUp, center))
+            _ = presentation.handle(mouse(.leftMouseDown, center, clicks: 2)); _ = presentation.handle(mouse(.leftMouseUp, center, clicks: 2))
+            await waitFor("Double-click enters fullscreen") { presentation.isFullscreen }
+            try? await Task.sleep(for: .seconds(1))
+            precondition(!model.engine.isPlaying, "Double-click must not also toggle playback")
+            presentation.toggleFullscreen()
+            await waitFor("Return from fullscreen") { !presentation.isFullscreen }
+            _ = presentation.handle(key(49))
+            await waitFor("Space resumes playback") { model.playing }
+            print("PASS: player-scoped shortcuts, repeat suppression, text/popover exclusions, click-to-pause and bounded seeks")
             let selector = NSSelectorFromString("delaySleep")
             let original = class_getMethodImplementation(VLCMediaPlayer.self, selector)
             let replacement = class_getMethodImplementation(type(of: model.engine), selector)

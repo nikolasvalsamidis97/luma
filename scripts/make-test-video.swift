@@ -5,7 +5,7 @@ let url = URL(fileURLWithPath: CommandLine.arguments[1])
 try? FileManager.default.removeItem(at: url)
 let is4K = CommandLine.arguments.contains("--4k")
 let width = is4K ? 3840 : 640, height = is4K ? 2160 : 360
-let frameCount = is4K ? 600 : 240
+let frameCount = is4K ? 600 : (CommandLine.arguments.contains("--long") ? 720 : 240)
 let frameRate: Int32 = is4K ? 30 : 24
 let writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
 writer.shouldOptimizeForNetworkUse = true

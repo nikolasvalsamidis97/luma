@@ -1,12 +1,12 @@
 # Luma
 
-[Website](https://nikolasvalsamidis97.github.io/luma/) · [Download 0.7.2](https://github.com/nikolasvalsamidis97/luma/releases/tag/v0.7.2)
+[Website](https://nikolasvalsamidis97.github.io/luma/) · [Download 0.8.0](https://github.com/nikolasvalsamidis97/luma/releases/tag/v0.8.0)
 
 A native macOS IPTV player for Xtream Codes providers and M3U playlist links. SwiftUI interface, embedded VLC playback, and macOS Keychain credential storage.
 
 ## Windows preview
 
-A separate Windows 10/11 x64 version is available in `dist/Luma-Windows-x64.zip`. Extract the complete folder and run `Luma.exe`; VLC, codecs and the .NET runtime are bundled. It includes provider login, movies/series/live TV, Continue Watching, Watchlist, episode navigation, audio/subtitles and fullscreen. See [Windows build and validation notes](windows/README.md). The executable is cross-compiled on Mac and needs a real Windows playback/UI check before public release. It is an unsigned preview; native Windows playback and UI verification remain pending.
+A separate Windows 10/11 x64 version is available in `dist/Luma-Windows-x64.zip`. Extract the complete folder and run `Luma.exe`; VLC, codecs and the .NET runtime are bundled. It includes provider login, movies/series/live TV, Continue Watching, Watchlist, episode navigation, audio/subtitles and fullscreen. See [Windows build and validation notes](windows/README.md). The executable is cross-compiled on Mac and needs a real Windows playback/UI check before being called stable. It is an unsigned preview; native Windows playback and UI verification remain pending.
 
 ## Open the app
 
@@ -112,6 +112,8 @@ This exercises embedded audio selection, actual decoded 360p/720p resolutions, A
 
 ## Fullscreen and 4K playback
 
+Press **Space** or click the video to play/pause. **← / →** skip backward/forward 10 seconds in seekable movies and episodes. Double-click still toggles fullscreen without also pausing. Playback shortcuts are scoped to the player and leave text fields, track menus and subtitle popovers alone.
+
 The player’s fullscreen button targets its own window, including after opening an audio/subtitle popover. Double-click the video or use Control–Command–F to toggle fullscreen; Escape exits. In fullscreen, the video uses the whole content area and controls overlay it. Controls hide after 2.5 seconds of inactivity during playback and return with mouse movement or a key press. They remain available while paused or interacting with a popover/control. The picture retains its original aspect ratio.
 
 Playback explicitly prefers Apple’s VideoToolbox hardware decoder, retaining fallback for unsupported formats. On-demand network buffering is four seconds (live TV stays at 1.5 seconds). Track metadata is refreshed less often than the playback clock. Buffering adds startup/seek latency and cannot compensate for a connection slower than the video bitrate. The local generated 4K HEVC fixture checks hardware decoding and rendered/lost frames; it does not represent provider bandwidth or every codec/HDR profile.
@@ -133,7 +135,7 @@ Luma holds a display-only power assertion during playback and releases it when p
 ./scripts/check-episode-player.sh --manual
 ```
 
-The isolated check uses generated local video and a synthetic catalogue, bypassing saved login/Keychain. It checks the actual Objective-C override, display assertion acquisition/release, near-end detection and clean episode transitions. Manual mode opens the production episode list and player for checking Play next across a season boundary, fullscreen retention and Back. Core checks cover ordering, specials, unknown metadata, final episodes and prompt timing. Physical keyboard lighting still requires observation on the affected Mac.
+The isolated check uses generated local video and a synthetic catalogue, bypassing saved login/Keychain. It checks player-scoped shortcuts, held-key suppression, text/popover exclusions, repeated paused seeks and their decoded resume positions, click/double-click behavior, the actual Objective-C override, display assertion acquisition/release, near-end detection and clean episode transitions. Manual mode opens the production episode list and player for checking Play next across a season boundary, fullscreen retention and Back. Core checks cover ordering, specials, unknown metadata, final episodes and prompt timing. Physical keyboard lighting still requires observation on the affected Mac.
 
 
 ## Continue watching and Watchlist
@@ -150,6 +152,8 @@ Positions save during playback (every five seconds), on pause, and when closing 
 
 This check uses generated local video, a loopback-only fixture provider on a dynamically allocated port, and an isolated preferences suite. It verifies real decoded resume time, persistence across fresh store/player instances, Watchlist preservation, final progress flush and account separation. Manual mode opens the production library to verify movie/episode resume, both panels, bookmark actions and Back navigation. Core checks cover serialization, completion, upcoming episodes, invalid/zero positions and independent title IDs.
 
-## Trial, developer keys and subscriptions (prepared for 0.8.0)
+## Trial, developer keys and subscriptions (Mac 0.8.0)
 
-A licensed build adds an explicit 3-day trial without a card, individual developer product keys, and a €4/month Stripe subscription after expiry. It is **not enabled in the existing public build**. See [licensing setup](licensing-server/README.md) for backend deployment, Stripe test/live setup, developer-key management, privacy updates and the `--licensed` build flag. Live payments require your Stripe account and a deployed HTTPS licensing service.
+The public Mac 0.8.0 download uses the live Cloudflare licensing service and Stripe Checkout. Choose **Start my 3-day free trial** for 72 hours without a card, then optionally subscribe for €4/month after expiry. Subscriptions renew monthly until canceled; cancellation retains the paid period. Individual developer keys unlock access without payment. See [subscription details](https://nikolasvalsamidis97.github.io/luma/billing.html), [privacy](https://nikolasvalsamidis97.github.io/luma/privacy.html) and [operator setup](licensing-worker/README.md). Existing 0.7.x free builds are not retroactively locked.
+
+The library and welcome screen show an access badge and **Upgrade to full version** button. Mac 0.8.0 displays the remaining trial time and switches to full-version/developer status after activation; expired trials open checkout or the product-key flow. The Windows 0.7.3 preview remains **Free early access** and does not start a countdown or collect payments. Default source builds also retain free development access; use `LUMA_LICENSE_SERVER_URL=https://luma-licenses-live.luma-licensing-worker.workers.dev ./scripts/build-app.sh --licensed` to reproduce the paid Mac release.

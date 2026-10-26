@@ -37,6 +37,9 @@ struct RootView: View {
             else if store.connected { LibraryView() }
             else { WelcomeView() }
         }.background(Theme.background).foregroundStyle(.white)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if license.allowed { LicenseBanner(license: license) }
+        }
         .task {
             store.playbackAllowed = { license.allowed }
             store.beforeSourceChange = { PlayerWindowController.shared.close() }
@@ -46,7 +49,9 @@ struct RootView: View {
             if !allowed { PlayerWindowController.shared.close(); store.showConnection = false }
         }
         .sheet(isPresented: $store.showPlaylists) { PlaylistManager().environmentObject(store) }
-        .sheet(isPresented: $license.showAccount) { LicenseView(license: license, canClose: true) }
+        .sheet(isPresented: $license.showAccount) {
+            ScrollView { LicenseView(license: license, canClose: true) }.frame(width: 500).frame(maxHeight: 720).background(Theme.background)
+        }
         .sheet(isPresented: $store.showConnection, onDismiss: { store.cancelConnection() }) {
             ScrollView { ConnectionForm(isSheet: true).environmentObject(store).frame(width: 480).padding(36) }.frame(maxHeight: 700).background(Theme.background)
         }

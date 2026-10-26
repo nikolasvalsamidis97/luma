@@ -5,11 +5,13 @@
   "runtime": "10.0.13",
   "core_checks_passed": 58,
   "native_vlc_plugins": 321,
-  "archive_bytes": 113534324,
-  "sha256": "2b546d8cf6f85249614297658bf616432bc251ad8a93b2232ddab7e6fd74fbfd",
+  "archive_bytes": 113552265,
+  "sha256": "6774daad6614937125c3b2ba103b084b8d76f38150dc1392bc954aa8782fc4df",
   "publicly_released": true,
-  "version": "0.7.2",
+  "version": "0.7.3",
   "m3u_support": true,
   "multiple_playlists": true,
-  "release_url": "https://github.com/nikolasvalsamidis97/luma/releases/tag/v0.7.2"
+  "playback_shortcuts": true,
+  "access_interface": true,
+  "release_tag": "v0.8.0"
 }

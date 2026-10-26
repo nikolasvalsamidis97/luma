@@ -13,6 +13,7 @@ import StreamCore
     @Published private(set) var message: String?
     @Published var showAccount = false
     @Published private(set) var hasIdentity = false
+    @Published private(set) var trialRemaining = ""
     let enabled: Bool
     private let server: URL?
     private var identity: LicenseIdentity?
@@ -35,8 +36,21 @@ import StreamCore
     }
     var canStartTrial: Bool { identity?.activated != true }
     var canSubscribe: Bool { grant?.status == "expired" && grant?.billingAvailable == true }
+    var hasFullAccess: Bool { enabled && allowed && ["active", "developer"].contains(grant?.status ?? "") }
+    var badge: String {
+        guard enabled else { return "Free early access" }
+        guard let grant else { return hasIdentity ? "Verify access" : "3-day free trial" }
+        if grant.status == "expired" { return grant.trialEndsAt > 0 ? "Trial ended" : "Access inactive" }
+        guard allowed else { return "Verify access" }
+        switch grant.status {
+        case "trial": return "3-day free trial"
+        case "developer": return "Developer · Full version"
+        case "active": return "Full version"
+        default: return "Access inactive"
+        }
+    }
     var title: String {
-        guard enabled else { return "Luma access" }
+        guard enabled else { return "Luma full version" }
         guard let grant else { return hasIdentity ? "Refresh your access" : "Make yourself comfortable." }
         switch grant.status {
         case "developer": return "Developer access"
@@ -46,7 +60,7 @@ import StreamCore
         }
     }
     var detail: String {
-        if !enabled { return "This build uses the existing free access. Subscriptions are being prepared." }
+        if !enabled { return "You’re using the free early-access version. Trials and upgrades aren’t available yet, so there’s no countdown and no payment required in this release." }
         guard let grant else { return "Try all of Luma for 3 days. No payment card required. Then €4/month if you choose to subscribe." }
         switch grant.status {
         case "developer": return "Full access with your developer product key. No subscription needed."
@@ -73,6 +87,14 @@ import StreamCore
     private func updateAllowed() {
         let next = !enabled || (grant?.permitsPlayback(receivedAt: receivedAt, currentUptime: LicenseClock.seconds) ?? false)
         if allowed != next { allowed = next }
+        let remaining: String
+        if let grant, grant.status == "trial", next {
+            let seconds = max(0, grant.trialEndsAt - grant.serverTime - max(0, LicenseClock.seconds - receivedAt))
+            if seconds > 86400 { remaining = "\(Int(ceil(seconds / 86400))) days left" }
+            else if seconds > 3600 { remaining = "\(Int(ceil(seconds / 3600))) hours left" }
+            else { remaining = "\(max(1, Int(ceil(seconds / 60)))) min left" }
+        } else { remaining = "" }
+        if trialRemaining != remaining { trialRemaining = remaining }
     }
     private func prepareIdentity() throws -> LicenseIdentity {
         if let identity { return identity }

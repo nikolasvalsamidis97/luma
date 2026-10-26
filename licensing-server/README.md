@@ -1,6 +1,6 @@
 # Luma licensing and subscriptions
 
-Prepared integration: **72 hours free, no card**, then an optional **€4 monthly subscription**. Developer product keys unlock full access without payment. Configure a €4/month product and customer portal in your own Stripe sandbox; keep their identifiers in local deployment settings. Backend API credentials are not connected and the service is not deployed yet. See [free hosting plan](HOSTING.md) for the recommended Cloudflare adaptation. The public 0.7.x releases remain free; it cannot be retroactively locked by this service.
+Integration: **72 hours free, no card**, then an optional **€4 monthly subscription**. Developer product keys unlock full access without payment. The Cloudflare Worker is deployed and connected to Stripe sandbox; hosted checkout, paid access and cancellation/revocation were verified on 26 October 2026. The separate live Worker/database is now connected to the live €4 monthly product, customer portal and webhook, with credentials encrypted in Cloudflare. Live checkout and customer portal creation were verified without charging a card. Mac 0.8.0 uses this live service; Windows 0.7.3 remains a free preview. See [Worker deployment status](../licensing-worker/README.md) and [hosting details](HOSTING.md). The public 0.7.x releases remain free; they cannot be retroactively locked by this service.
 
 ## What is implemented
 
@@ -21,7 +21,7 @@ Prepared integration: **72 hours free, no card**, then an optional **€4 monthl
 4. Host the backend below on an HTTPS service with a **persistent disk**, then configure its secrets using the host's secret/environment settings. GitHub Pages can continue hosting the marketing site, but cannot run this backend.
 5. Register a **snapshot** webhook at `https://YOUR-HOST/v1/stripe/webhook`, using API version `2025-02-24.acacia` (also pinned in the server's Stripe client). Subscribe to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. The endpoint rereads Stripe state, so duplicate and out-of-order deliveries are safe.
 6. Run real Stripe test checkout, renewal, failed renewal, cancellation, restoration and webhook retry tests. The automated tests here use a fake Stripe service; they do not substitute for an account-connected end-to-end test.
-7. Switch backend secrets, webhook secret and Price ID to the matching **live** environment only when ready. Update the public privacy page with licensing data collection, price and subscription details before releasing the licensed app. The existing site's privacy text describes the free 0.7.0 build.
+7. Switch backend secrets, webhook secret and Price ID to the matching **live** environment only when ready. Update the public privacy page with licensing data collection, price and subscription details before releasing the licensed app. The public privacy and billing pages describe Mac 0.8.0 and the free Windows preview.
 
 Official references: [Checkout](https://docs.stripe.com/api/checkout/sessions/create), [webhooks](https://docs.stripe.com/webhooks), [customer portal](https://docs.stripe.com/customer-management), [payout bank account](https://support.stripe.com/questions/add-a-bank-account-for-payouts).
 
@@ -48,7 +48,7 @@ After the HTTPS backend is deployed:
 LUMA_LICENSE_SERVER_URL=https://YOUR-HOST ./scripts/build-app.sh --licensed
 ```
 
-This creates **`dist/Luma-licensed.zip`, version 0.8.0**, with the public backend URL in its Info.plist. Only the URL goes into the app; no Stripe secret goes there. Normal builds remain version 0.7.0 with legacy free access. The flags are a build-time rollout safeguard, not anti-tamper protection. Add `--install` only when ready to replace your installed app. Apply Developer ID signing/notarization as part of public release preparation.
+This creates **`dist/Luma-licensed.zip`, version 0.8.0**, with the public backend URL in its Info.plist. Only the URL goes into the app; no Stripe secret goes there. Normal development builds remain version 0.7.3 with legacy free access. The flags are a build-time rollout safeguard, not anti-tamper protection. Add `--install` only when ready to replace your installed app. Apply Developer ID signing/notarization as part of public release preparation.
 
 Choose **Luma → Luma Access…** for the trial, product-key activation, copying the recovery key, refreshing access, and managing/canceling billing. Save the recovery product key privately before moving to a different Mac. Subscription entitlement is restored with that key. If the key is lost and no activated Mac remains, support must verify ownership in Stripe and rotate the account's key on the backend; there is no email-based self-service recovery yet.
 

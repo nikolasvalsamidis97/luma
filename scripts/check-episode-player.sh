@@ -14,6 +14,6 @@ swiftc -parse-as-library -target "$(uname -m)-apple-macos14.0" -I .build/debug/M
   Sources/StreamApp/Theme.swift Sources/StreamApp/Player.swift Sources/StreamApp/PlayerPresentation.swift Sources/StreamApp/SubtitleControls.swift Sources/StreamApp/PlaybackControls.swift Sources/StreamApp/MediaFactsStore.swift Sources/StreamApp/MediaCard.swift Sources/StreamApp/DetailView.swift Sources/StreamApp/LibraryStore.swift scripts/check-episode-player.swift \
   .build/debug/StreamCore.build/*.swift.o -o "$APP/Contents/MacOS/Luma"
 codesign --force --deep --sign - "$APP"
-swift scripts/make-test-video.swift "$CHECK_DIR/video.mp4"
+swift scripts/make-test-video.swift "$CHECK_DIR/video.mp4" --long
 echo "Episode check app: $APP"
 "$APP/Contents/MacOS/Luma" "$CHECK_DIR/video.mp4" "${1:-}"
